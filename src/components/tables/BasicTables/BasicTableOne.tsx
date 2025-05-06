@@ -19,15 +19,45 @@ import Select from "../../form/Select";
 import { db } from "../../../firebase";
 import { 
   collection, 
-  getDocs, 
   doc, 
-  updateDoc
+  updateDoc,
+  onSnapshot
 } from "firebase/firestore";
+
+interface WeeklySummary {
+  date: string;
+  consistency: number;
+  routines?: Array<{
+    name?: string;
+    consistency?: number;
+    code?: string;
+    color?: string;
+  }>;
+}
+
+interface FirestoreDocument {
+  ChildName?: string;
+  GradeLevel?: string;
+  dailySummary?: {
+    totalCompleted?: number;
+    totalMissed?: number;
+    lastUpdated?: string;
+  };
+  weeklyConsistency?: number;
+  weeklySummaries?: Record<string, WeeklySummary>;
+  [key: string]: unknown; // For dynamically named fields like 'weeklySummaries.2025-04-14'
+}
 
 interface Order {
   id: string;
   ChildsName: string;
   Glevel: string;
+  dailySummary?: {
+    totalCompleted: number;
+    totalMissed: number;
+  };
+  weeklyConsistency?: number;
+  weeklySummaries?: Record<string, WeeklySummary>;
 }
 
 export default function BasicTableOne() {
@@ -50,31 +80,128 @@ export default function BasicTableOne() {
     { value: "Nursery II", label: "Nursery II" },
   ];
 
+  // Extract the most recent weekly summary from a student document
+  const extractLatestWeeklySummary = (docData: FirestoreDocument): { consistency: number; date: string } | null => {
+    // First, check if there's a direct weeklyConsistency field (as seen in the screenshot)
+    if (typeof docData.weeklyConsistency === 'number') {
+      return {
+        consistency: docData.weeklyConsistency,
+        date: "latest"
+      };
+    }
+    
+    // If no direct weeklyConsistency field, look for the latest date in weeklySummaries
+    if (docData.weeklySummaries) {
+      const dateKeys = Object.keys(docData.weeklySummaries)
+        .filter(key => /^\d{4}-\d{2}-\d{2}$/.test(key));
+      
+      if (dateKeys.length > 0) {
+        // Sort dates in descending order (most recent first)
+        dateKeys.sort((a, b) => new Date(b).getTime() - new Date(a).getTime());
+        const latestDate = dateKeys[0];
+        
+        const latestSummary = docData.weeklySummaries[latestDate];
+        if (latestSummary && typeof latestSummary.consistency === 'number') {
+          return {
+            consistency: latestSummary.consistency,
+            date: latestDate
+          };
+        }
+      }
+    }
+    
+    // Check for fields that directly match the pattern "weeklySummaries.YYYY-MM-DD"
+    const weeklyKeys = Object.keys(docData)
+      .filter(key => key.startsWith('weeklySummaries.') && /^\d{4}-\d{2}-\d{2}$/.test(key.substring(16)));
+    
+    if (weeklyKeys.length > 0) {
+      // Sort to find the most recent one
+      weeklyKeys.sort((a, b) => {
+        const dateA = a.substring(16); // Extract date part
+        const dateB = b.substring(16);
+        return new Date(dateB).getTime() - new Date(dateA).getTime();
+      });
+      
+      const latestKey = weeklyKeys[0];
+      const latestDate = latestKey.substring(16);
+      
+      // Handle nested field access for consistency - use typed unknown instead of any
+      const latestSummary = docData[latestKey] as unknown;
+      let consistency = 0;
+      
+      if (typeof latestSummary === 'object' && latestSummary !== null) {
+        const summaryObj = latestSummary as Record<string, unknown>;
+        
+        // Check if consistency field exists directly
+        if (typeof summaryObj.consistency === 'number') {
+          consistency = summaryObj.consistency;
+        }
+        // Check if there's a routines array with consistency values
+        else if (Array.isArray(summaryObj.routines)) {
+          // Calculate average consistency from routines if available
+          const routineConsistencies = summaryObj.routines
+            .filter(r => {
+              return r !== null && 
+                    typeof r === 'object' && 
+                    'consistency' in r && 
+                    typeof (r as Record<string, unknown>).consistency === 'number';
+            })
+            .map(r => Number((r as Record<string, unknown>).consistency));
+          
+          if (routineConsistencies.length > 0) {
+            consistency = routineConsistencies.reduce((a, b) => a + b, 0) / routineConsistencies.length;
+          }
+        }
+      }
+      
+      return {
+        consistency,
+        date: latestDate
+      };
+    }
+    
+    return null;
+  };
+
   // Fetch data from Firebase
   useEffect(() => {
-    const fetchData = async () => {
+    // Set up a real-time listener instead of a one-time fetch
+    const studentsCollection = collection(db, "students");
+    
+    // Using onSnapshot for real-time updates
+    const unsubscribe = onSnapshot(studentsCollection, (snapshot) => {
       try {
-        const parentsCollection = collection(db, "students");
-        const parentsSnapshot = await getDocs(parentsCollection);
+        const studentsData = snapshot.docs.map(doc => {
+          const docData = doc.data() as FirestoreDocument;
+          const latestWeeklySummary = extractLatestWeeklySummary(docData);
+          
+          return {
+            id: doc.id,
+            ChildsName: docData.ChildName || "N/A",
+            Glevel: docData.GradeLevel || "N/A",
+            dailySummary: {
+              totalCompleted: docData.dailySummary?.totalCompleted || 0,
+              totalMissed: docData.dailySummary?.totalMissed || 0
+            },
+            weeklyConsistency: latestWeeklySummary?.consistency
+          };
+        });
         
-        const parentsData = parentsSnapshot.docs.map(doc => ({
-          id: doc.id,
-          ChildsName: doc.data().ChildName || "N/A",
-          Glevel: doc.data().GradeLevel || "N/A",
-        }));
-        
-        setTableData(parentsData);
+        setTableData(studentsData);
+        setLoading(false);
+        console.log("Real-time data updated:", studentsData); // Debug log
       } catch (error) {
-        console.error("Error fetching data:", error);
-      } finally {
+        console.error("Error processing snapshot data:", error);
         setLoading(false);
       }
-    };
-
-    fetchData();
+    }, (error) => {
+      console.error("Error in real-time listener:", error);
+      setLoading(false);
+    });
+    
+    // Clean up listener when component unmounts
+    return () => unsubscribe();
   }, []);
-
-  
 
   // Handle edit modal open
   const handleEditClick = (order: Order) => {
@@ -95,19 +222,9 @@ export default function BasicTableOne() {
         ChildName: editChildName,
         GradeLevel: editGradeLevel
       });
-
-      // Update UI after successful update
-      setTableData(prevData => 
-        prevData.map(item => 
-          item.id === selectedOrder.id 
-            ? {
-                ...item, 
-                ChildsName: editChildName,
-                Glevel: editGradeLevel
-              } 
-            : item
-        )
-      );
+      
+      // No need to manually update the UI since we have the onSnapshot listener
+      // The listener will automatically update the table with the new data
       
       closeModal();
     } catch (error) {
@@ -118,6 +235,51 @@ export default function BasicTableOne() {
 
   const handleSelectChange = (value: string) => {
     setEditGradeLevel(value);
+  };
+
+  // Calculate daily summary completion ratio for display
+  const getDailySummaryDisplay = (order: Order) => {
+    const completed = order.dailySummary?.totalCompleted || 0;
+    const missed = order.dailySummary?.totalMissed || 0;
+    const total = completed + missed;
+    
+    return `${completed}/${total}`;
+  };
+
+  // Determine color based on completion percentage
+  const getDailySummaryColor = (order: Order) => {
+    const completed = order.dailySummary?.totalCompleted || 0;
+    const missed = order.dailySummary?.totalMissed || 0;
+    const total = completed + missed;
+    
+    if (total === 0) return "text-gray-400";
+    
+    const percentage = (completed / total) * 100;
+    
+    if (percentage >= 75) return "text-green-600";
+    if (percentage >= 50) return "text-yellow-600";
+    return "text-red-600";
+  };
+  
+  // Format weekly consistency for display
+  const getWeeklyConsistencyDisplay = (consistency: number | undefined) => {
+    if (consistency === undefined) return "N/A";
+    
+    // Round to nearest integer if it's close, otherwise show one decimal place
+    const roundedValue = Math.abs(Math.round(consistency) - consistency) < 0.1 
+      ? Math.round(consistency)
+      : Number(consistency.toFixed(1));
+      
+    return `${roundedValue}%`;
+  };
+  
+  // Get color based on weekly consistency percentage
+  const getWeeklyConsistencyColor = (consistency: number | undefined) => {
+    if (consistency === undefined) return "text-gray-400";
+    
+    if (consistency >= 80) return "text-green-600";
+    if (consistency >= 60) return "text-yellow-600";
+    return "text-red-600";
   };
 
   return (
@@ -199,13 +361,13 @@ export default function BasicTableOne() {
                       </Badge>
                     </TableCell>
                     <TableCell className="px-4 py-3 text-gray-800 text-start text-theme-sm dark:text-white/90">
-                      <div className="flex -space-x-2">
-                      {/* daily summary */}
+                      <div className={`flex -space-x-2 font-medium ${getDailySummaryColor(order)}`}>
+                            {getDailySummaryDisplay(order)}
                       </div>
                     </TableCell>
                     <TableCell className="px-4 py-3 text-gray-800 text-start text-theme-sm dark:text-white/90">
-                      <div className="flex -space-x-2">
-                      {/* Weekly consistency */}
+                      <div className={`flex -space-x-2 font-medium ${getWeeklyConsistencyColor(order.weeklyConsistency)}`}>
+                      {getWeeklyConsistencyDisplay(order.weeklyConsistency)}
                       </div>
                     </TableCell>
                     <TableCell className="px-4 py-3 text-gray-500 text-theme-sm dark:text-gray-400">

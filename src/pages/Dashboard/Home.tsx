@@ -13,7 +13,7 @@ export default function Home() {
       <PageBreadcrumb pageTitle="Students Accounts" />
       <div className="grid grid-cols-12 gap-4 md:gap-6">
         <div className="col-span-12 space-y-01 xl:col-span-13">
-        <ComponentCard title="Students Accounts">
+        <ComponentCard title="Students Daily Summary and Weekly Consistency Progress">
           <BasicTable />
         </ComponentCard>
         </div>
