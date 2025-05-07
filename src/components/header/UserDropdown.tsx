@@ -86,7 +86,7 @@ const [userData, setUserData] = useState({
         className="flex items-center text-gray-700 dropdown-toggle dark:text-gray-400"
       >
 
-        <span className="block mr-1 font-medium text-theme-sm">{userData.firstName}</span>
+        <span className="block mr-1 font-medium text-theme-sm">Teacher {userData.firstName}</span>
         <svg
           className={`stroke-gray-500 dark:stroke-gray-400 transition-transform duration-200 ${
             isOpen ? "rotate-180" : ""

@@ -1,9 +1,33 @@
 import Chart from "react-apexcharts";
 import { ApexOptions } from "apexcharts";
 
-export default function BarChartOne() {
+interface RoutineData {
+  name?: string;
+  consistency?: number;
+  color?: string;
+  code?: string;
+}
+
+interface BarChartOneProps {
+  routines?: RoutineData[];
+  childName?: string;
+}
+
+export default function BarChartOne({ routines = [], childName = "Child" }: BarChartOneProps) {
+  // Define theme colors - can be from theme context in a real app
+  const isDarkMode = false; // This could be from a theme context
+  // Extract data from routines for the chart
+  const categories = routines.map(routine => routine.name || "Unnamed");
+  const consistencyData = routines.map(routine => routine.consistency || 0);
+  
+  // Define custom colors if not provided in the routines
+  const defaultColors = ["#465fff", "#27AE60", "#F1C40F", "#8E44AD", "#E74C3C", "#1ABC9C", "#F39C12", "#3498DB"];
+  const colors = routines.map((routine, index) => 
+    routine.color || defaultColors[index % defaultColors.length]
+  );
+
   const options: ApexOptions = {
-    colors: ["#465fff"],
+    colors: colors,
     chart: {
       fontFamily: "Outfit, sans-serif",
       type: "bar",
@@ -12,12 +36,25 @@ export default function BarChartOne() {
         show: false,
       },
     },
+    title: {
+      text: `${childName}'s Routine Consistency`,
+      align: 'center',
+      style: {
+        fontSize: '16px',
+        fontWeight: 500,
+        color: isDarkMode ? '#F3F4F6' : '#4B5563' // Title color based on theme
+      }
+    },
     plotOptions: {
       bar: {
         horizontal: false,
         columnWidth: "39%",
         borderRadius: 5,
         borderRadiusApplication: "end",
+        distributed: true, // Enable this to use different colors for each bar
+        dataLabels: {
+          position: 'top',
+        }
       },
     },
     dataLabels: {
@@ -29,20 +66,7 @@ export default function BarChartOne() {
       colors: ["transparent"],
     },
     xaxis: {
-      categories: [
-        "Jan",
-        "Feb",
-        "Mar",
-        "Apr",
-        "May",
-        "Jun",
-        "Jul",
-        "Aug",
-        "Sep",
-        "Oct",
-        "Nov",
-        "Dec",
-      ],
+      categories: categories,
       axisBorder: {
         show: false,
       },
@@ -51,12 +75,15 @@ export default function BarChartOne() {
       },
     },
     legend: {
-      show: true,
-      position: "top",
-      horizontalAlign: "left",
-      fontFamily: "Outfit",
+      show: false, // Hide legend since we're using distributed colors
     },
     yaxis: {
+      min: 0,
+      max: 100,
+      tickAmount: 5,
+      labels: {
+        formatter: (val: number) => `${val}%`,
+      },
       title: {
         text: undefined,
       },
@@ -71,26 +98,44 @@ export default function BarChartOne() {
     fill: {
       opacity: 1,
     },
-
     tooltip: {
       x: {
-        show: false,
+        show: true,
       },
       y: {
-        formatter: (val: number) => `${val}`,
+        formatter: (val: number) => `${val}%`,
       },
     },
   };
+
   const series = [
     {
-      name: "Sales",
-      data: [168, 385, 201, 298, 187, 195, 291, 110, 215, 390, 280, 112],
+      name: "Consistency",
+      data: consistencyData,
     },
   ];
+
+  // Show a message if no routines data is available
+  if (routines.length === 0) {
+    return (
+      <div className="flex items-center justify-center h-40 text-gray-500">
+        No routine data available for {childName}.
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-full overflow-x-auto custom-scrollbar">
-      <div id="chartOne" className="min-w-[1000px]">
-        <Chart options={options} series={series} type="bar" height={180} />
+      <div id="chartOne" className="min-w-[600px]">
+        <Chart 
+          options={options} 
+          series={series} 
+          type="bar" 
+          height={320} 
+        />
+        <div className="text-xs text-center mt-2 text-gray-500">
+          {routines.length > 0 ? `${routines.length} routines tracked` : ''}
+        </div>
       </div>
     </div>
   );

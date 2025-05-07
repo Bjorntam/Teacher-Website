@@ -14,6 +14,7 @@ import { useModal } from "../../../hooks/useModal";
 import Input from "../../form/input/InputField";
 import Label from "../../form/Label";
 import Select from "../../form/Select";
+import BarChartOne from "../../charts/bar/BarChartOne";
 
 // Import Firebase dependencies
 import { db } from "../../../firebase";
@@ -24,15 +25,17 @@ import {
   onSnapshot
 } from "firebase/firestore";
 
+interface RoutineData {
+  name?: string;
+  consistency?: number;
+  code?: string;
+  color?: string;
+}
+
 interface WeeklySummary {
   date: string;
   consistency: number;
-  routines?: Array<{
-    name?: string;
-    consistency?: number;
-    code?: string;
-    color?: string;
-  }>;
+  routines?: RoutineData[];
 }
 
 interface FirestoreDocument {
@@ -58,6 +61,7 @@ interface Order {
   };
   weeklyConsistency?: number;
   weeklySummaries?: Record<string, WeeklySummary>;
+  latestRoutines?: RoutineData[];
 }
 
 export default function BasicTableOne() {
@@ -65,6 +69,8 @@ export default function BasicTableOne() {
   const [tableData, setTableData] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  // State to track which row has its chart open
+  const [expandedRowId, setExpandedRowId] = useState<string | null>(null);
 
   // Modal state
   const { isOpen, openModal, closeModal } = useModal();
@@ -80,9 +86,13 @@ export default function BasicTableOne() {
     { value: "Nursery II", label: "Nursery II" },
   ];
 
-  // Extract the most recent weekly summary from a student document
-  const extractLatestWeeklySummary = (docData: FirestoreDocument): { consistency: number; date: string } | null => {
-    // First, check if there's a direct weeklyConsistency field (as seen in the screenshot)
+  // Extract the most recent weekly summary and routines from a student document
+  const extractLatestWeeklySummary = (docData: FirestoreDocument): { 
+    consistency: number; 
+    date: string;
+    routines?: RoutineData[];
+  } | null => {
+    // First, check if there's a direct weeklyConsistency field
     if (typeof docData.weeklyConsistency === 'number') {
       return {
         consistency: docData.weeklyConsistency,
@@ -90,7 +100,7 @@ export default function BasicTableOne() {
       };
     }
     
-    // If no direct weeklyConsistency field, look for the latest date in weeklySummaries
+    // Look for the latest date in weeklySummaries
     if (docData.weeklySummaries) {
       const dateKeys = Object.keys(docData.weeklySummaries)
         .filter(key => /^\d{4}-\d{2}-\d{2}$/.test(key));
@@ -101,10 +111,11 @@ export default function BasicTableOne() {
         const latestDate = dateKeys[0];
         
         const latestSummary = docData.weeklySummaries[latestDate];
-        if (latestSummary && typeof latestSummary.consistency === 'number') {
+        if (latestSummary) {
           return {
-            consistency: latestSummary.consistency,
-            date: latestDate
+            consistency: latestSummary.consistency || 0,
+            date: latestDate,
+            routines: latestSummary.routines
           };
         }
       }
@@ -125,9 +136,10 @@ export default function BasicTableOne() {
       const latestKey = weeklyKeys[0];
       const latestDate = latestKey.substring(16);
       
-      // Handle nested field access for consistency - use typed unknown instead of any
+      // Handle nested field access
       const latestSummary = docData[latestKey] as unknown;
       let consistency = 0;
+      let routines: RoutineData[] | undefined = undefined;
       
       if (typeof latestSummary === 'object' && latestSummary !== null) {
         const summaryObj = latestSummary as Record<string, unknown>;
@@ -136,27 +148,28 @@ export default function BasicTableOne() {
         if (typeof summaryObj.consistency === 'number') {
           consistency = summaryObj.consistency;
         }
-        // Check if there's a routines array with consistency values
-        else if (Array.isArray(summaryObj.routines)) {
-          // Calculate average consistency from routines if available
-          const routineConsistencies = summaryObj.routines
-            .filter(r => {
-              return r !== null && 
-                    typeof r === 'object' && 
-                    'consistency' in r && 
-                    typeof (r as Record<string, unknown>).consistency === 'number';
-            })
-            .map(r => Number((r as Record<string, unknown>).consistency));
+        
+        // Check if there's a routines array
+        if (Array.isArray(summaryObj.routines)) {
+          routines = summaryObj.routines as RoutineData[];
           
-          if (routineConsistencies.length > 0) {
-            consistency = routineConsistencies.reduce((a, b) => a + b, 0) / routineConsistencies.length;
+          // Calculate average consistency from routines if main consistency field is missing
+          if (typeof summaryObj.consistency !== 'number' && routines.length > 0) {
+            const routineConsistencies = routines
+              .filter(r => typeof r.consistency === 'number')
+              .map(r => Number(r.consistency));
+            
+            if (routineConsistencies.length > 0) {
+              consistency = routineConsistencies.reduce((a, b) => a + b, 0) / routineConsistencies.length;
+            }
           }
         }
       }
       
       return {
         consistency,
-        date: latestDate
+        date: latestDate,
+        routines
       };
     }
     
@@ -183,7 +196,8 @@ export default function BasicTableOne() {
               totalCompleted: docData.dailySummary?.totalCompleted || 0,
               totalMissed: docData.dailySummary?.totalMissed || 0
             },
-            weeklyConsistency: latestWeeklySummary?.consistency
+            weeklyConsistency: latestWeeklySummary?.consistency,
+            latestRoutines: latestWeeklySummary?.routines
           };
         });
         
@@ -209,6 +223,11 @@ export default function BasicTableOne() {
     setEditChildName(order.ChildsName);
     setEditGradeLevel(order.Glevel);
     openModal();
+  };
+
+  // Handle chart button click - toggle chart visibility
+  const handleChartClick = (orderId: string) => {
+    setExpandedRowId(prevId => prevId === orderId ? null : orderId);
   };
 
   // Handle save changes
@@ -318,7 +337,7 @@ export default function BasicTableOne() {
                   isHeader
                   className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
                 >
-                  Send Message
+                  Actions
                 </TableCell>
               </TableRow>
             </TableHeader>
@@ -326,19 +345,20 @@ export default function BasicTableOne() {
             {/* Table Body */}
             <TableBody className="divide-y divide-gray-100 dark:divide-white/[0.05]">
             {loading ? (
-              <TableRow>
-                <TableCell className="px-5 py-4 text-center">
-                    <div className="col-span-5 px-5 py-4 text-center">Loading data...</div>
-                  </TableCell>
-                </TableRow>
-                ) : tableData.length === 0 ? (
-                  <TableRow>
-                    <TableCell className="px-5 py-4 text-center">
-                      <div className="col-span-5 px-5 py-4 text-center">No records found</div>
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                tableData.map((order) => (
+              <tr>
+                <td colSpan={5} className="px-5 py-4 text-center">
+                  <div className="px-5 py-4 text-center">Loading data...</div>
+                </td>
+              </tr>
+            ) : tableData.length === 0 ? (
+              <tr>
+                <td colSpan={5} className="px-5 py-4 text-center">
+                  <div className="px-5 py-4 text-center">No records found</div>
+                </td>
+              </tr>
+            ) : (
+              tableData.map((order) => (
+                <>
                   <TableRow key={order.id}>
                     <TableCell className="px-4 py-3 text-gray-800 text-start text-theme-sm dark:text-white/90">
                       <div className="flex -space-x-2">
@@ -381,11 +401,43 @@ export default function BasicTableOne() {
                             <path strokeLinecap="round" strokeLinejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" />
                           </svg>
                         </Button>
+                        <Button
+                          size="md"
+                          variant="primary"
+                          onClick={() => handleChartClick(order.id)}
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-4">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 0 1 3 19.875v-6.75ZM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V8.625ZM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V4.125Z" />
+                          </svg>
+                        </Button>
                       </div>
                     </TableCell>
                   </TableRow>
-                ))
-              )}
+                  
+                  {/* Chart row - expanded with smooth animation */}
+                  {expandedRowId === order.id && (
+                    <tr
+                      className="bg-gray-50 dark:bg-gray-800/50 chart-row"
+                      style={{
+                        maxHeight: expandedRowId === order.id ? '500px' : '0',
+                        overflow: 'hidden',
+                        transition: 'max-height 0.3s ease-in-out',
+                      }}
+                    >
+                      <td colSpan={5} className="px-4 py-4">
+                        <div className="rounded-lg p-4">
+                          {/* We don't need the heading here since it's in the chart now */}
+                          <BarChartOne 
+                            routines={order.latestRoutines} 
+                            childName={order.ChildsName} 
+                          />
+                        </div>
+                      </td>
+                    </tr>
+                  )}
+                </>
+              ))
+            )}
             </TableBody>
           </Table>
         </div>
