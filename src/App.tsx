@@ -48,7 +48,7 @@ export default function App() {
           <Route path="/Signup" element={<SignUp />} />
 
           {/* Default Redirect */}
-          <Route path="/signin" element={<Navigate to="/signin" />} />
+          <Route path="/" element={<Navigate to="/signin" replace />} />
 
           {/* Protected Layout and Routes */}
           <Route
