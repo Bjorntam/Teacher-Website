@@ -42,6 +42,7 @@ interface RoutineData {
 interface WeeklySummary {
   date: string;
   consistency: number;
+  weeklyConsistency?: number;
   routines?: RoutineData[];
 }
 
@@ -85,7 +86,6 @@ export default function BasicTableOne() {
   const [teacherLoading, setTeacherLoading] = useState(true);
   const [graphType, setGraphType] = useState<"bar" | "line">("bar");
   const [selectedDate, setSelectedDate] = useState<string>("");
-
   const { isOpen, closeModal } = useModal();
   const [editEmail, setEditEmail] = useState("");
   const [editParentName, setEditParentName] = useState("");
@@ -214,7 +214,24 @@ export default function BasicTableOne() {
     const unsubscribe = onSnapshot(studentsCollection, (snapshot) => {
       try {
         const studentsData = snapshot.docs.map(doc => {
-          const docData = doc.data() as FirestoreDocument;
+          // raw doc data (may contain flattened keys like 'weeklySummaries.2025-09-12')
+          const raw = doc.data() as Record<string, any>;
+          const docData = raw as FirestoreDocument;
+          
+          // Ensure we have a proper weeklySummaries map even if Firestore stored flattened fields
+          let weeklySummariesObj = docData.weeklySummaries as Record<string, WeeklySummary> | undefined;
+          const flattenedKeys = Object.keys(raw).filter(k =>
+            k.startsWith("weeklySummaries.") &&
+            /^\d{4}-\d{2}-\d{2}$/.test(k.substring("weeklySummaries.".length))
+          );
+          if ((!weeklySummariesObj || Object.keys(weeklySummariesObj).length === 0) && flattenedKeys.length > 0) {
+            weeklySummariesObj = {};
+            flattenedKeys.forEach(k => {
+              const date = k.substring("weeklySummaries.".length);
+              weeklySummariesObj![date] = raw[k];
+            });
+          }
+          
           const latestWeeklySummary = extractLatestWeeklySummary(docData);
           
           return {
@@ -226,7 +243,8 @@ export default function BasicTableOne() {
               totalMissed: docData.dailySummary?.totalMissed || 0
             },
             weeklyConsistency: latestWeeklySummary?.consistency,
-            weeklySummaries: docData.weeklySummaries,
+            // use the normalized map (either the original or the one built from flattened keys)
+            weeklySummaries: weeklySummariesObj,
             latestRoutines: latestWeeklySummary?.routines
           };
         });
@@ -367,20 +385,41 @@ export default function BasicTableOne() {
     return dates.map(date => ({ value: date, label: date }));
   };
 
-  const getLineChartData = (order: Order) => {
-    if (!order.weeklySummaries) return { categories: [], data: [] };
-    
-    const dates = Object.keys(order.weeklySummaries)
-      .filter(key => /^\d{4}-\d{2}-\d{2}$/.test(key))
-      .sort((a, b) => new Date(a).getTime() - new Date(b).getTime());
-    
-    const data = dates.map(date => {
-      const summary = order.weeklySummaries![date];
-      return summary.consistency || 0;
-    });
-    
-    return { categories: dates, data };
-  };
+const getLineChartData = (order: Order) => {
+  if (!order.weeklySummaries) return { categories: [], data: [] };
+  
+  const dates = Object.keys(order.weeklySummaries)
+    .filter(key => /^\d{4}-\d{2}-\d{2}$/.test(key))
+    .sort((a, b) => new Date(a).getTime() - new Date(b).getTime());
+  
+  const data = dates.map(date => {
+    const summary: any = order.weeklySummaries![date];
+    let consistency = 0;
+
+    if (summary == null) {
+      consistency = 0;
+    } else if (typeof summary === "number") {
+      consistency = Number(summary);
+    } else if (typeof summary === "object") {
+      if (typeof summary.consistency === "number") {
+        consistency = Number(summary.consistency);
+      } else if (typeof summary.weeklyConsistency === "number") {
+        consistency = Number(summary.weeklyConsistency);
+      } else if (Array.isArray(summary.routines)) {
+        const nums = summary.routines
+          .filter((r: any) => typeof r.consistency === "number")
+          .map((r: any) => Number(r.consistency));
+        if (nums.length > 0) {
+          consistency = nums.reduce((a: number, b: number) => a + b, 0) / nums.length;
+        }
+      }
+    }
+
+    return Number(isNaN(consistency) ? 0 : Math.round(consistency));
+  });
+  
+  return { categories: dates, data };
+};
 
   return (
     <div>
@@ -520,7 +559,7 @@ export default function BasicTableOne() {
                                     variant="outline"
                                     onClick={toggleGraphType}
                                   >
-                                    {graphType === "bar" ? "Change to Line Graph" : "Change to Bar Graph"}
+                                    {graphType === "bar" ? "View Weekly Summaries" : "View Current Week"}
                                   </Button>
                                   {graphType === "line" && (
                                     <div className="w-48">
@@ -642,6 +681,7 @@ interface LineChartOneWrapperProps {
 }
 
 function LineChartOneWrapper({ chartData }: LineChartOneWrapperProps) {
+  const isDarkMode = false;
   const options: ApexOptions = {
     legend: {
       show: false,
@@ -656,6 +696,15 @@ function LineChartOneWrapper({ chartData }: LineChartOneWrapperProps) {
       toolbar: {
         show: false,
       },
+    },
+    title: {
+      text: `Weekly Routine Consistency Summaries`,
+      align: 'center',
+      style: {
+        fontSize: '16px',
+        fontWeight: 500,
+        color: isDarkMode ? '#F3F4F6' : '#4B5563' // Title color based on theme
+      }
     },
     stroke: {
       curve: "straight",
@@ -711,7 +760,11 @@ function LineChartOneWrapper({ chartData }: LineChartOneWrapperProps) {
       },
     },
     yaxis: {
+      min: 0,
+      max: 100,
+      tickAmount: 5,
       labels: {
+         formatter: (val: number) => `${val}%`,
         style: {
           fontSize: "12px",
           colors: ["#6B7280"],
