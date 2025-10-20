@@ -86,7 +86,7 @@ export default function BarChartOne({ routines = [], childName = "Child" }: BarC
         formatter: (val: number) => `${val}%`,
       },
       title: {
-        text: undefined,
+        text: "Consistency",
       },
     },
     grid: {

@@ -41,9 +41,38 @@ export default function ConsistencyGraph({ filteredData }: ConsistencyGraphProps
     ).map(name => ({ value: name, label: name }))
   ];
 
+  // find a color for a selected routine (prefer latestRoutines, then scan weeklySummaries)
+  const getRoutineColor = (routineName: string) => {
+    const defaultColor = "#465FFF";
+    if (!routineName || routineName === "All") return defaultColor;
+
+    // search latestRoutines first
+    for (const order of filteredData) {
+      const foundLatest = order.latestRoutines?.find(r => String(r.name).toLowerCase() === String(routineName).toLowerCase());
+      if (foundLatest && foundLatest.color) return foundLatest.color;
+    }
+
+    // then scan weeklySummaries
+    for (const order of filteredData) {
+      if (!order.weeklySummaries) continue;
+      const dates = Object.keys(order.weeklySummaries).filter(k => /^\d{4}-\d{2}-\d{2}$/.test(k));
+      for (const d of dates) {
+        const s: any = order.weeklySummaries![d];
+        if (s && Array.isArray(s.routines)) {
+          const f = s.routines.find((r: any) => String(r.name).toLowerCase() === String(routineName).toLowerCase());
+          if (f && f.color) return f.color;
+        }
+      }
+    }
+
+    return defaultColor;
+  };
+
+  const routineColor = getRoutineColor(selectedRoutine);
+
   // Chart configuration
   const chartOptions: ApexOptions = {
-    colors: ["#465fff"],
+    colors: [routineColor],
     chart: {
       fontFamily: "Outfit, sans-serif",
       type: "bar",
@@ -84,6 +113,9 @@ export default function ConsistencyGraph({ filteredData }: ConsistencyGraphProps
       },
       axisTicks: {
         show: false,
+      },
+      title: {
+        text: "Students",
       },
       labels: {
         rotate: -45,

@@ -16,7 +16,7 @@ import Select from "../../form/Select";
 import BarChartOne from "../../charts/bar/BarChartOne";
 import ConsistencyGraph from "./ConsistencyGraph";
 import ComponentCard from "../../common/ComponentCard";
-
+import Badge from "../../ui/badge/Badge";
 // Import Firebase dependencies
 import { db } from "../../../firebase";
 import { 
@@ -70,6 +70,7 @@ interface Order {
   weeklyConsistency?: number;
   weeklySummaries?: Record<string, WeeklySummary>;
   latestRoutines?: RoutineData[];
+  assignmentStatus?: string; // <-- added
 }
 
 type SortOption = "consistencyAsc" | "consistencyDesc";
@@ -86,6 +87,7 @@ export default function BasicTableOne() {
   const [teacherLoading, setTeacherLoading] = useState(true);
   const [graphType, setGraphType] = useState<"bar" | "line">("bar");
   const [selectedDate, setSelectedDate] = useState<string>("");
+  const [selectedRoutine, setSelectedRoutine] = useState<string>("All");
   const { isOpen, closeModal } = useModal();
   const [editEmail, setEditEmail] = useState("");
   const [editParentName, setEditParentName] = useState("");
@@ -233,6 +235,18 @@ export default function BasicTableOne() {
           }
           
           const latestWeeklySummary = extractLatestWeeklySummary(docData);
+
+          // extract assignment field (handles "Assignment:", "Assignment", "assignment")
+          const rawAssignment = docData["Assignment:"] ?? docData["Assignment"] ?? docData["assignment"] ?? null;
+          let assignmentStatus = "N/A";
+          if (rawAssignment !== null && rawAssignment !== undefined) {
+            const v = String(rawAssignment).trim().toLowerCase();
+            if (v === "completed" || v === "complete" || v === "done" || v === "true") assignmentStatus = "Completed";
+            else if (v === "pending" || v === "in progress" || v === "in-progress") assignmentStatus = "Pending";
+            else if (v === "missed" || v === "false" || v === "not completed") assignmentStatus = "Missed";
+            else if (v === "") assignmentStatus = "N/A";
+            else assignmentStatus = String(rawAssignment); // fallback show raw value
+          }
           
           return {
             id: doc.id,
@@ -245,7 +259,8 @@ export default function BasicTableOne() {
             weeklyConsistency: latestWeeklySummary?.consistency,
             // use the normalized map (either the original or the one built from flattened keys)
             weeklySummaries: weeklySummariesObj,
-            latestRoutines: latestWeeklySummary?.routines
+            latestRoutines: latestWeeklySummary?.routines,
+            assignmentStatus, // include status
           };
         });
 
@@ -333,10 +348,10 @@ export default function BasicTableOne() {
     setEditGradeLevel(value);
   };
 
-  const handleDateChange = (value: string) => {
-    setSelectedDate(value);
+  const handleRoutineChange = (value: string) => {
+    setSelectedRoutine(value);
   };
-
+  
   const getDailySummaryDisplay = (order: Order) => {
     const completed = order.dailySummary?.totalCompleted || 0;
     const missed = order.dailySummary?.totalMissed || 0;
@@ -359,6 +374,15 @@ export default function BasicTableOne() {
     return "text-red-600";
   };
   
+ const getAssignmentBadgeColor = (status?: string): "success" | "warning" | "error" | "light" => {
+  if (!status) return "light";
+  const s = status.toLowerCase();
+  if (s.includes("completed") || s === "completed") return "success";
+  if (s.includes("pending") || s === "pending") return "warning";
+  if (s.includes("missed") || s === "missed") return "error";
+  return "light";
+};
+  
   const getWeeklyConsistencyDisplay = (consistency: number | undefined) => {
     if (consistency === undefined) return "N/A";
     
@@ -377,50 +401,88 @@ export default function BasicTableOne() {
     return "text-red-600";
   };
 
-  const getAvailableDates = (order: Order): { value: string; label: string }[] => {
-    if (!order.weeklySummaries) return [];
-    const dates = Object.keys(order.weeklySummaries)
-      .filter(key => /^\d{4}-\d{2}-\d{2}$/.test(key))
-      .sort((a, b) => new Date(b).getTime() - new Date(a).getTime());
-    return dates.map(date => ({ value: date, label: date }));
+
+  const getRoutineOptions = (order: Order): { value: string; label: string }[] => {
+    const names = new Set<string>();
+
+    // include latestRoutines (current week)
+    order.latestRoutines?.forEach(r => { if (r?.name) names.add(r.name); });
+
+    // include routines from all weeklySummaries
+    if (order.weeklySummaries) {
+      Object.values(order.weeklySummaries).forEach((summary: any) => {
+        if (summary && Array.isArray(summary.routines)) {
+          summary.routines.forEach((r: any) => { if (r?.name) names.add(r.name); });
+        }
+      });
+    }
+
+    return [{ value: "All", label: "All Routines" }, ...Array.from(names).map(n => ({ value: n, label: n }))];
   };
-
-const getLineChartData = (order: Order) => {
-  if (!order.weeklySummaries) return { categories: [], data: [] };
   
-  const dates = Object.keys(order.weeklySummaries)
-    .filter(key => /^\d{4}-\d{2}-\d{2}$/.test(key))
-    .sort((a, b) => new Date(a).getTime() - new Date(b).getTime());
-  
-  const data = dates.map(date => {
-    const summary: any = order.weeklySummaries![date];
-    let consistency = 0;
+  const getLineChartData = (order: Order, routine: string) => {
+    // return structure now includes color
+    if (!order.weeklySummaries && !order.latestRoutines) return { categories: [], data: [], color: "#465FFF" };
+    
+    const dates = order.weeklySummaries
+      ? Object.keys(order.weeklySummaries)
+          .filter(key => /^\d{4}-\d{2}-\d{2}$/.test(key))
+          .sort((a, b) => new Date(a).getTime() - new Date(b).getTime())
+      : [];
+    
+    const data = dates.map(date => {
+      const summary: any = order.weeklySummaries![date];
 
-    if (summary == null) {
-      consistency = 0;
-    } else if (typeof summary === "number") {
-      consistency = Number(summary);
-    } else if (typeof summary === "object") {
-      if (typeof summary.consistency === "number") {
-        consistency = Number(summary.consistency);
-      } else if (typeof summary.weeklyConsistency === "number") {
-        consistency = Number(summary.weeklyConsistency);
-      } else if (Array.isArray(summary.routines)) {
-        const nums = summary.routines
-          .filter((r: any) => typeof r.consistency === "number")
-          .map((r: any) => Number(r.consistency));
-        if (nums.length > 0) {
-          consistency = nums.reduce((a: number, b: number) => a + b, 0) / nums.length;
+      if (routine === "All") {
+        let consistency = 0;
+        if (summary == null) {
+          consistency = 0;
+        } else if (typeof summary === "number") {
+          consistency = Number(summary);
+        } else {
+          if (typeof summary.consistency === "number") consistency = Number(summary.consistency);
+          else if (typeof summary.weeklyConsistency === "number") consistency = Number(summary.weeklyConsistency);
+          else if (Array.isArray(summary.routines)) {
+            const nums = summary.routines
+              .filter((r: any) => typeof r.consistency === "number")
+              .map((r: any) => Number(r.consistency));
+            if (nums.length > 0) consistency = nums.reduce((a: number, b: number) => a + b, 0) / nums.length;
+          }
+        }
+        return Number(isNaN(consistency) ? 0 : Math.round(consistency));
+      }
+
+      let routineConsistency = 0;
+      if (summary && typeof summary === "object" && Array.isArray(summary.routines)) {
+        const found = summary.routines.find((r: any) => String(r.name).toLowerCase() === String(routine).toLowerCase());
+        if (found && typeof found.consistency === "number") routineConsistency = Number(found.consistency);
+      }
+      return Number(isNaN(routineConsistency) ? 0 : Math.round(routineConsistency));
+    });
+
+    // determine color: prefer latestRoutines, then scanning weeklySummaries for first match
+    let color = "#465FFF"; // default
+    if (routine !== "All") {
+      const foundLatest = order.latestRoutines?.find(r => String(r.name).toLowerCase() === String(routine).toLowerCase());
+      if (foundLatest && foundLatest.color) {
+        color = foundLatest.color;
+      } else if (order.weeklySummaries) {
+        for (const d of dates) {
+          const s: any = order.weeklySummaries![d];
+          if (s && Array.isArray(s.routines)) {
+            const f = s.routines.find((r: any) => String(r.name).toLowerCase() === String(routine).toLowerCase());
+            if (f && f.color) {
+              color = f.color;
+              break;
+            }
+          }
         }
       }
     }
 
-    return Number(isNaN(consistency) ? 0 : Math.round(consistency));
-  });
+    return { categories: dates, data, color };
+  };
   
-  return { categories: dates, data };
-};
-
   return (
     <div>
       {/* Render ConsistencyGraph with filteredData */}
@@ -470,11 +532,19 @@ const getLineChartData = (order: Order) => {
                     >
                       Child's Name
                     </TableCell>
+
                     <TableCell
                       isHeader
                       className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
                     >
-                      Daily Summary
+                      Yesterday’s Assignment
+                    </TableCell>
+                    
+                    <TableCell
+                      isHeader
+                      className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
+                    >
+                      Yesterday’s Routines
                     </TableCell>
                     <TableCell
                       isHeader
@@ -517,6 +587,17 @@ const getLineChartData = (order: Order) => {
                               {order.ChildsName}
                             </div>
                           </TableCell>
+
+                          <TableCell className="px-4 py-3 text-gray-800 text-start text-theme-sm dark:text-white/90">
+                            <Badge 
+                              variant="solid" // Use solid for better visibility, or light
+                              size="sm"
+                              color={getAssignmentBadgeColor(order.assignmentStatus)}
+                              >
+                               {order.assignmentStatus || "N/A"}
+                              </Badge>
+                          </TableCell>
+                          
                           <TableCell className="px-4 py-3 text-gray-800 text-start text-theme-sm dark:text-white/90">
                             <div className={`flex -space-x-2 font-medium ${getDailySummaryColor(order)}`}>
                               {getDailySummaryDisplay(order)}
@@ -551,7 +632,7 @@ const getLineChartData = (order: Order) => {
                               transition: 'max-height 0.3s ease-in-out',
                             }}
                           >
-                            <td colSpan={4} className="px-4 py-4">
+                            <td colSpan={5} className="px-4 py-4">
                               <div className="rounded-lg p-4">
                                 <div className="flex justify-between mb-4">
                                   <Button
@@ -564,11 +645,11 @@ const getLineChartData = (order: Order) => {
                                   {graphType === "line" && (
                                     <div className="w-48">
                                       <Select
-                                        options={getAvailableDates(order)}
-                                        placeholder="Select Date"
-                                        onChange={handleDateChange}
+                                        options={getRoutineOptions(order)}
+                                        placeholder="Select Routine"
+                                        onChange={handleRoutineChange}
                                         className="dark:bg-dark-900"
-                                        defaultValue={selectedDate}
+                                        defaultValue={selectedRoutine}
                                       />
                                     </div>
                                   )}
@@ -587,13 +668,13 @@ const getLineChartData = (order: Order) => {
                                   )
                                 ) : (
                                   <LineChartOneWrapper 
-                                    chartData={getLineChartData(order)} 
+                                    chartData={getLineChartData(order, selectedRoutine)} 
                                   />
                                 )}
                               </div>
                             </td>
                           </tr>
-                        )}
+                        )}  
                       </>
                     ))
                   )}
@@ -677,18 +758,20 @@ interface LineChartOneWrapperProps {
   chartData: {
     categories: string[];
     data: number[];
+    color?: string;
   };
 }
 
 function LineChartOneWrapper({ chartData }: LineChartOneWrapperProps) {
   const isDarkMode = false;
+  const color = chartData.color || "#465FFF";
   const options: ApexOptions = {
     legend: {
       show: false,
       position: "top",
       horizontalAlign: "left",
     },
-    colors: ["#465FFF", "#9CB9FF"],
+    colors: [color],
     chart: {
       fontFamily: "Outfit, sans-serif",
       height: 310,
@@ -749,6 +832,9 @@ function LineChartOneWrapper({ chartData }: LineChartOneWrapperProps) {
     xaxis: {
       type: "category",
       categories: chartData.categories,
+      title: {
+        text: "Weekly Routine Summary",
+      },
       axisBorder: {
         show: false,
       },
@@ -771,10 +857,7 @@ function LineChartOneWrapper({ chartData }: LineChartOneWrapperProps) {
         },
       },
       title: {
-        text: "",
-        style: {
-          fontSize: "0px",
-        },
+        text: "Consistency",
       },
     },
   };

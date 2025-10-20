@@ -6,6 +6,8 @@ import Button from "../../components/ui/button/Button";
 import { db } from "../../firebase";
 import { collection, addDoc, doc, getDoc } from "firebase/firestore";
 import { getAuth, onAuthStateChanged } from "firebase/auth";
+import Flatpickr from "react-flatpickr";
+import "flatpickr/dist/flatpickr.min.css";
 
 // Type for new assignment form
 interface AssignmentForm {
@@ -13,6 +15,7 @@ interface AssignmentForm {
   subDesc: string;
   description: string;
   badges: string[];
+  deadline?: string; // store the datetime-local value (will convert to ISO before saving)
 }
 
 // Type for teacher information
@@ -30,6 +33,7 @@ export default function Assignments() {
     subDesc: "",
     description: "",
     badges: [],
+    deadline: "",
   });
   const [newBadge, setNewBadge] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -117,6 +121,29 @@ export default function Assignments() {
     try {
       const now = new Date();
       
+      // convert deadline (datetime-local / ISO string) to ISO if provided and valid
+      let deadlineIso: string | null = null;
+      if (newAssignment.deadline && newAssignment.deadline.trim() !== "") {
+        const d = new Date(newAssignment.deadline);
+        if (!isNaN(d.getTime())) {
+          deadlineIso = d.toISOString();
+        } else {
+          // fallback: try parsing as ISO already
+          const d2 = new Date(String(newAssignment.deadline));
+          if (!isNaN(d2.getTime())) deadlineIso = d2.toISOString();
+        }
+      }
+
+      // validation: prevent posting if deadline is in the past
+      if (deadlineIso) {
+        const deadlineDate = new Date(deadlineIso);
+        if (deadlineDate.getTime() < now.getTime()) {
+          setError("Deadline cannot be in the past.");
+          setIsSubmitting(false);
+          return;
+        }
+      }
+
       // Create a new document in the assignments collection
       const assignmentData = {
         title: newAssignment.title,
@@ -130,6 +157,7 @@ export default function Assignments() {
         teacherName: teacherInfo.name,
         teacherGradeLevel: teacherInfo.gradeLevel,
         createdAt: now.toISOString(),
+        deadline: deadlineIso, // will be null if not set
       };
 
       console.log("Saving assignment with data:", JSON.stringify(assignmentData));
@@ -148,6 +176,7 @@ export default function Assignments() {
         subDesc: "",
         description: "",
         badges: [],
+        deadline: "",
       });
       setIsModalOpen(false);
 
@@ -289,6 +318,36 @@ export default function Assignments() {
                         </span>
                       ))}
                     </div>
+                  </div>
+
+                  {/* Deadline picker */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      Deadline (optional)
+                    </label>
+                    <div className="relative w-full flatpickr-wrapper">
+                      <Flatpickr
+                        value={newAssignment.deadline ? new Date(newAssignment.deadline) : undefined}
+                        onChange={(dates: Date[]) => {
+                          const d = dates && dates[0];
+                          setNewAssignment((prev) => ({
+                            ...prev,
+                            deadline: d ? d.toISOString() : "",
+                          }));
+                        }}
+                        options={{
+                          enableTime: true,
+                          // use 12-hour clock with AM/PM
+                          time_24hr: false,
+                          // show AM/PM in formatted string
+                          dateFormat: "Y-m-d h:i K",
+                          appendTo: typeof document !== "undefined" ? document.body : undefined,
+                        }}
+                        className="h-11 w-full rounded-lg border appearance-none px-4 py-2.5 text-sm shadow-theme-xs placeholder:text-gray-400 focus:outline-none focus:ring  dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30  bg-transparent text-gray-800 border-gray-300 focus:border-brand-300 focus:ring-brand-500/20 dark:border-gray-700  dark:focus:border-brand-800"
+                        placeholder="Select deadline (optional)"
+                      />
+                    </div>
+                    <p className="text-xs text-gray-500 mt-1">Leave blank for no deadline.</p>
                   </div>
                 </div>
 
