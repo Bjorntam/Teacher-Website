@@ -20,7 +20,7 @@ interface Assignment {
 }
 
 export default function AssignmentCard() {
-  const [assignments, setAssignments] = useState<Assignment[]>([]);
+  const [, setAssignments] = useState<Assignment[]>([]);
   const [ongoingAssignments, setOngoingAssignments] = useState<Assignment[]>([]);
   const [pastAssignments, setPastAssignments] = useState<Assignment[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
