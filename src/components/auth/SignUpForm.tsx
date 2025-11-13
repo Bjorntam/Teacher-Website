@@ -280,60 +280,174 @@ export default function SignUpForm() {
             <h2 className="text-lg font-semibold text-gray-800 dark:text-white mb-4">
               Terms and Conditions
             </h2>
-            <div className="text-sm text-gray-600 dark:text-gray-300 mb-4">
-              <h3 className="font-semibold">Welcome to Metamorpet</h3>
-              <p>These Terms and Conditions govern the use of our platform by teachers, including account management, sending reminders, and publishing announcements. By using our system, you agree to comply with these terms. Please read them carefully.</p>
+              <div className="max-h-[60vh] overflow-y-auto custom-scrollbar pr-2">
+                <div className="space-y-4 text-sm text-gray-600 dark:text-gray-400">
+                  <p className="text-gray-500 dark:text-gray-400">
+                    Last updated: November 13, 2025
+                  </p>
 
-              <h4 className="font-semibold mt-4">1. Account Creation</h4>
-              <p><strong>Eligibility</strong>: Teachers must be at least 18 years old and authorized by their educational institution to create an account.</p>
-              <p><strong>Process</strong>:</p>
-              <ul className="list-disc pl-5">
-                <li>Provide a valid email address or phone number for verification.</li>
-                <li>Complete profile setup with your name, age, and role (Teacher).</li>
-                <li>Create a secure password, which will be encrypted for your protection.</li>
-                <li>Agree to these Terms and Conditions and the Privacy Policy during sign-up.</li>
-                <li>Receive a confirmation email or notification upon successful registration.</li>
-              </ul>
-              <p><strong>Responsibility</strong>: You are responsible for maintaining the confidentiality of your account credentials and for all activities under your account. Teachers must ensure their email is registered in the system’s teacher database, as verified by an admin.</p>
+                  <div>
+                    <h4 className="mb-2 text-lg font-semibold text-gray-800 dark:text-white">
+                      1. Introduction
+                    </h4>
+                    <p>
+                      Welcome to MetamorPET, a gamified educational platform designed to help students build healthy learning and daily routines through interactive activities, progress tracking, and virtual pets. By using MetamorPET on any device, you agree to these Terms and Conditions. Please read them carefully before using the application.
+                    </p>
+                  </div>
 
-              <h4 className="font-semibold mt-4">2. Account Update</h4>
-              <p>Teachers may edit their profile information (e.g., name, contact details, profile picture) and update login credentials (e.g., email, password) at any time. Security settings, such as two-factor authentication (2FA) and recovery email, can be updated. Notification preferences (e.g., reminder and announcement delivery settings) can be customized. All changes must be saved and confirmed via a verification step (e.g., email or password confirmation).</p>
+                  <div>
+                    <h4 className="mb-2 text-lg font-semibold text-gray-800 dark:text-white">
+                      2. Purpose of MetamorPET
+                    </h4>
+                    <p className="mb-3">
+                      MetamorPET is a digital learning system that connects students, parents, teachers, and administrators to support daily routine management and classroom engagement.
+                    </p>
+                    <p className="mb-3">
+                      Students participate in routines and classwork, earning progress by caring for their virtual pets.
+                    </p>
+                    <p className="mb-3">
+                      Parents validate routines, monitor their child's progress, and stay informed through announcements.
+                    </p>
+                    <p className="mb-3">
+                      Teachers assign classwork, create announcements, and track student performance.
+                    </p>
+                    <p className="mb-3">
+                      Administrators manage user accounts and verify registered emails within the system.
+                    </p>
+                    <p>
+                      The goal of MetamorPET is to create a secure and motivating platform that encourages consistent learning habits and engagement among young learners.
+                    </p>
+                  </div>
 
-              <h4 className="font-semibold mt-4">3. Account Deletion</h4>
-              <p>Teachers may request account deletion through the system’s account management settings. A verification step (e.g., confirmation prompt or email verification) is required to prevent unauthorized deletions. Teachers may opt to export relevant data (e.g., announcement or reminder logs) before deletion, where applicable. Upon deletion, all personal data will be permanently removed from the system in accordance with the Data Privacy Act of 2012, except for data required to be retained by law. A notification will be sent to confirm successful deletion.</p>
+                  <div>
+                    <h4 className="mb-2 text-lg font-semibold text-gray-800 dark:text-white">
+                      3. User Accounts and Responsibilities
+                    </h4>
+                    <p className="mb-3">
+                      Each user is given an account corresponding to their role: student, parent, teacher, or administrator. By accessing MetamorPET, you agree to:
+                    </p>
+                    <ul className="ml-6 space-y-2 list-disc">
+                      <li>Keep your login credentials and PIN password private and secure.</li>
+                      <li>Use the platform only for educational purposes.</li>
+                      <li>Access only the features permitted for your assigned role.</li>
+                      <li>Refrain from sharing or disclosing account information to others.</li>
+                    </ul>
+                    <p className="mt-3">
+                      All accounts are linked to school records and remain active only while the user is enrolled or employed. Student accounts will be terminated once the student graduates to maintain data security and ensure proper record management.
+                    </p>
+                  </div>
 
-              <h4 className="font-semibold mt-4">4. Teachers’ Reminder</h4>
-              <p>Teachers can send assignment reminders to students and parents, setting schedules and deadlines as needed. Notifications are delivered to both students and parents, with confirmation of receipt required. Automated follow-up reminders are sent for unacknowledged or incomplete tasks. Teachers are responsible for ensuring reminders are accurate, appropriate, and compliant with system guidelines.</p>
+                  <div>
+                    <h4 className="mb-2 text-lg font-semibold text-gray-800 dark:text-white">
+                      4. Acceptable Use
+                    </h4>
+                    <p className="mb-3">
+                      Users are expected to use MetamorPET responsibly. You agree not to:
+                    </p>
+                    <ul className="ml-6 space-y-2 list-disc">
+                      <li>Upload, share, or distribute any content, files, or materials through the system.</li>
+                      <li>Modify, copy, or extract any data or code from the platform.</li>
+                      <li>Access or attempt to access areas or data that are not part of your assigned role.</li>
+                      <li>Perform any activity that disrupts or harms the system's performance or other users.</li>
+                    </ul>
+                    <p className="mt-3">
+                      Any violation of these rules may result in restricted access or referral to the appropriate school authority.
+                    </p>
+                  </div>
 
-              <h4 className="font-semibold mt-4">5. Teacher’s Announcement</h4>
-              <p>Teachers can create and publish announcements categorized as urgent, general, or event-based. Announcements can be scheduled for future release and tracked for views and engagement. Students and parents can acknowledge or respond to announcements through the system. Teachers must ensure announcements are professional, relevant, and comply with system guidelines.</p>
+                  <div>
+                    <h4 className="mb-2 text-lg font-semibold text-gray-800 dark:text-white">
+                      5. Data and Privacy
+                    </h4>
+                    <p className="mb-3">
+                      MetamorPET collects limited information—such as user names, email addresses, activity logs, and progress data—to enable its educational features. All information is managed in accordance with the MetamorPET Privacy Policy, ensuring that data is securely stored, used only for educational purposes, and not shared with third parties unless required by law.
+                    </p>
+                    <p>
+                      Parents and guardians are encouraged to supervise their child's use of the application to ensure proper and safe interaction.
+                    </p>
+                  </div>
 
-              <h4 className="font-semibold mt-4">6. User Responsibilities</h4>
-              <p>Teachers must provide accurate information during account creation and updates. Teachers must not engage in unauthorized access, misuse of system features (e.g., sending inappropriate reminders or announcements), or sharing of account credentials. Teachers are responsible for complying with all applicable laws and regulations, including the Data Privacy Act of 2012, when handling student or parent data.</p>
+                  <div>
+                    <h4 className="mb-2 text-lg font-semibold text-gray-800 dark:text-white">
+                      6. Intellectual Property
+                    </h4>
+                    <p className="mb-3">
+                      All components of MetamorPET—including its name, logo, visual assets, virtual pets, designs, and system framework—are the exclusive property of the MetamorPET development team.
+                    </p>
+                    <p>
+                      Users are not allowed to copy, reproduce, or redistribute any part of the application or its materials without written consent.
+                    </p>
+                  </div>
 
-              <h4 className="font-semibold mt-4">7. Termination</h4>
-              <p>We reserve the right to suspend or terminate teacher accounts for violations of these Terms and Conditions, including misuse of the system, inappropriate content in reminders or announcements, or unauthorized access. Teachers will be notified of termination and provided an opportunity to export relevant data (e.g., announcement or reminder logs), where applicable.</p>
+                  <div>
+                    <h4 className="mb-2 text-lg font-semibold text-gray-800 dark:text-white">
+                      7. Account Retention and Termination
+                    </h4>
+                    <p className="mb-3">
+                      All user accounts remain active as long as they are associated with the school's system.
+                    </p>
+                    <p className="mb-3">
+                      Student accounts are deactivated after graduation to maintain database efficiency and protect user privacy.
+                    </p>
+                    <p className="mb-3">
+                      Parent, teacher, and administrator accounts may be removed if they are no longer associated with the institution.
+                    </p>
+                    <p>
+                      This ensures that all active users have legitimate access and that the system remains secure and organized.
+                    </p>
+                  </div>
 
-              <h4 className="font-semibold mt-4">8. Limitation of Liability</h4>
-              <p>Metamorpet is not liable for any indirect, incidental, or consequential damages arising from the use of the system. We strive to ensure system availability but are not responsible for interruptions due to technical issues or maintenance.</p>
+                  <div>
+                    <h4 className="mb-2 text-lg font-semibold text-gray-800 dark:text-white">
+                      8. Modifications to the Terms
+                    </h4>
+                    <p>
+                      The MetamorPET team may update or revise these Terms and Conditions at any time. Users will be notified of major updates within the application or through official communication channels. Continued use of the platform after such updates constitutes acceptance of the revised terms.
+                    </p>
+                  </div>
 
-              <h4 className="font-semibold mt-4">9. Changes to the Terms and Conditions</h4>
-              <p>We may update these Terms and Conditions to reflect changes in our services or legal requirements. Teachers will be notified of significant changes via email or system notifications, and continued use of the system constitutes acceptance of the updated terms.</p>
+                  <div>
+                    <h4 className="mb-2 text-lg font-semibold text-gray-800 dark:text-white">
+                      9. Limitation of Liability
+                    </h4>
+                    <p className="mb-3">
+                      MetamorPET is intended solely for educational purposes. The developers are not responsible for:
+                    </p>
+                    <ul className="ml-6 space-y-2 list-disc">
+                      <li>Data loss resulting from user error or misuse.</li>
+                      <li>Unauthorized access caused by shared or exposed credentials.</li>
+                      <li>Any indirect or incidental damages related to the use or inability to use the application.</li>
+                    </ul>
+                    <p className="mt-3">
+                      Users accept that they use the platform at their own discretion and responsibility.
+                    </p>
+                  </div>
 
-              <h4 className="font-semibold mt-4">10. Governing Law</h4>
-              <p>These Terms and Conditions are governed by the laws of the Republic of the Philippines, including compliance with the Data Privacy Act of 2012.</p>
+                  <div>
+                    <h4 className="mb-2 text-lg font-semibold text-gray-800 dark:text-white">
+                      10. Governing Law
+                    </h4>
+                    <p>
+                      These Terms and Conditions are governed by the laws of the Republic of the Philippines. Any disputes related to the use of MetamorPET shall be resolved under applicable Philippine laws.
+                    </p>
+                  </div>
 
-              <h4 className="font-semibold mt-4">11. Contact Us</h4>
-              <p>For questions or concerns about these Terms and Conditions, contact us at metamorpet@gmail.com or 623 Bancal Extension, Meycauayan, 3020 Bulacan, Philippines.</p>
-
-              <p className="mt-4">These Terms and Conditions are effective as of May 21, 2025.</p>
+                  <div>
+                    <h4 className="mb-2 text-lg font-semibold text-gray-800 dark:text-white">
+                      11. Contact Information
+                    </h4>
+                    <p>
+                      For inquiries, support, or feedback regarding these Terms and Conditions, please contact: 📧 metamorpet@gmail.com
+                    </p>
+                  </div>
+                  <button
+                  onClick={() => setShowTerms(false)}
+                  className="mt-4 px-4 py-2 bg-brand-500 text-white rounded-lg hover:bg-brand-600"
+                  >
+                    Close
+                  </button>
+                </div>
             </div>
-            <button
-              onClick={() => setShowTerms(false)}
-              className="mt-4 px-4 py-2 bg-brand-500 text-white rounded-lg hover:bg-brand-600"
-            >
-              Close
-            </button>
           </div>
         </div>
       )}
@@ -344,94 +458,150 @@ export default function SignUpForm() {
             <h2 className="text-lg font-semibold text-gray-800 dark:text-white mb-4">
               Privacy Policy
             </h2>
-            <div className="text-sm text-gray-600 dark:text-gray-300 mb-4">
-              <h3 className="font-semibold">Privacy Policy</h3>
-              <p>This Privacy Policy outlines how Metamorpet collects, uses, stores, and protects user data in compliance with the Data Privacy Act of 2012 (Republic Act No. 10173) in the Philippines and other applicable legal and ethical standards. We are committed to safeguarding your personal information and ensuring transparency in our data handling practices.</p>
+            <div className="max-h-[60vh] overflow-y-auto custom-scrollbar pr-2">
+            <div className="space-y-4 text-sm text-gray-600 dark:text-gray-400">
+              <p className="text-gray-500 dark:text-gray-400">
+                Last updated: November 13, 2025
+              </p>
 
-              <h4 className="font-semibold mt-4">1. Data Collection</h4>
-              <p>We collect personal information during the sign-up process and throughout your use of the system to provide a personalized and secure experience. The data we collect includes:</p>
-              <ul className="list-disc pl-5">
-                <li><strong>Personal Information</strong>: Name, email address, phone number, age, and role (Parent, Student, Teacher, Admin) provided during account creation and profile setup.</li>
-                <li><strong>Account Credentials</strong>: Encrypted passwords and security settings (e.g., two-factor authentication, recovery email).</li>
-                <li><strong>Usage Data</strong>: Information related to routine planning, tracking, notifications, pet customization, shop transactions, leaderboard rankings, and teacher announcements/reminders.</li>
-                <li><strong>Optional Data</strong>: Profile pictures, custom routine templates, and notification preferences.</li>
-              </ul>
-              <p>All data collection complies with the Data Privacy Act of 2012, ensuring that only necessary and relevant information is collected with your explicit consent.</p>
+              <div>
+                <h4 className="mb-2 text-lg font-semibold text-gray-800 dark:text-white">
+                  1. Introduction
+                </h4>
+                <p className="mb-3">
+                  This Privacy Policy explains how MetamorPET ("we," "our," or "us") collects, uses, stores, and protects the personal information of users who access the application across any device or platform. By using MetamorPET, you acknowledge that you have read and understood this policy and agree to the collection and use of your information as described here.
+                </p>
+                <p>
+                  MetamorPET is a gamified educational platform designed to help students develop learning habits and daily routines through interactive features involving teachers, parents, and administrators.
+                </p>
+              </div>
 
-              <h4 className="font-semibold mt-4">2. Data Use</h4>
-              <p>Your personal information is used to:</p>
-              <ul className="list-disc pl-5">
-                <li>Facilitate account creation, updates, and deletion.</li>
-                <li>Provide personalized features such as routine planning, tracking, notifications, and pet customization.</li>
-                <li>Enable communication between users (e.g., teacher reminders and announcements).</li>
-                <li>Display rankings and achievements on the leaderboard.</li>
-                <li>Process in-game transactions and track purchase history.</li>
-                <li>Ensure system functionality and security.</li>
-              </ul>
-              <p>We ensure that data usage aligns with the principles of transparency, legitimate purpose, and proportionality as mandated by the Data Privacy Act of 2012.</p>
+              <div>
+                <h4 className="mb-2 text-lg font-semibold text-gray-800 dark:text-white">
+                  2. Information We Collect
+                </h4>
+                <p className="mb-3">
+                  MetamorPET collects only the data necessary for educational and system functionality. The types of information collected include:
+                </p>
+                <ul className="ml-6 space-y-2 list-disc">
+                  <li>Full name (student, parent, teacher, or administrator)</li>
+                  <li>Email address (used for account registration and verification)</li>
+                  <li>Grade level or class assignment (for grouping and educational tracking)</li>
+                  <li>Routine or classwork records (completed tasks, progress, and activity logs)</li>
+                  <li>Validated task information (for parent and teacher confirmation)</li>
+                </ul>
+                <p className="mt-3">
+                  No unnecessary or sensitive data such as financial details, location tracking, or biometric information is collected.
+                </p>
+              </div>
 
-              <h4 className="font-semibold mt-4">3. Data Storage and Security</h4>
-              <p><strong>Storage</strong>: Personal data is stored on secure servers with access restricted to authorized personnel only.</p>
-              <p><strong>Encryption</strong>: Passwords and sensitive data are encrypted using industry-standard protocols to prevent unauthorized access.</p>
-              <p><strong>Security Measures</strong>: We implement technical, organizational, and physical safeguards, including two-factor authentication (2FA) and regular security audits, to protect your data from breaches, loss, or misuse.</p>
-              <p><strong>Retention</strong>: Data is retained only for as long as necessary to fulfill the purposes outlined in this policy or as required by law. Upon account deletion, personal data is permanently removed from our systems within 30 days, except for data required to be retained by law.</p>
+              <div>
+                <h4 className="mb-2 text-lg font-semibold text-gray-800 dark:text-white">
+                  3. How We Collect Information
+                </h4>
+                <p className="mb-3">
+                  Information is collected through:
+                </p>
+                <ul className="ml-6 space-y-2 list-disc">
+                  <li>User registration – when accounts are created by the school or administrator.</li>
+                  <li>User interaction – when students complete routines, teachers post classwork, or parents validate tasks.</li>
+                  <li>Administrative verification – when administrators verify user email addresses and manage account activation.</li>
+                </ul>
+                <p className="mt-3">
+                  All information entered into the platform is directly related to the user's educational role and activity.
+                </p>
+              </div>
 
-              <h4 className="font-semibold mt-4">4. Data Sharing</h4>
-              <p>We do not share your personal information with third parties except:</p>
-              <ul className="list-disc pl-5">
-                <li>With your explicit consent.</li>
-                <li>When required by law or to comply with legal processes (e.g., court orders).</li>
-                <li>To protect the rights, safety, or property of Metamorpet, its users, or the public.</li>
-                <li>With authorized service providers (e.g., cloud storage or notification services) bound by strict confidentiality agreements and compliant with the Data Privacy Act of 2012.</li>
-              </ul>
+              <div>
+                <h4 className="mb-2 text-lg font-semibold text-gray-800 dark:text-white">
+                  4. How We Use the Information
+                </h4>
+                <p className="mb-3">
+                  The information we collect is used solely to support the learning and management features of the MetamorPET platform, including:
+                </p>
+                <ul className="ml-6 space-y-2 list-disc">
+                  <li>Managing user accounts and ensuring proper access based on user role.</li>
+                  <li>Tracking student routines, progress, and validated activities.</li>
+                  <li>Facilitating communication and transparency among teachers, parents, and students.</li>
+                  <li>Supporting educational reporting and class management.</li>
+                </ul>
+                <p className="mt-3">
+                  We do not sell, trade, or share user information with external parties for commercial purposes.
+                </p>
+              </div>
 
-              <h4 className="font-semibold mt-4">5. Data Handling Process</h4>
-              <p>In accordance with legal and ethical standards, we follow these processes for handling your data:</p>
-              <ul className="list-disc pl-5">
-                <li><strong>Consent</strong>: During sign-up, users must explicitly agree to this Privacy Policy and the Terms and Conditions. Consent is obtained via a clear and affirmative action (e.g., checking a box).</li>
-                <li><strong>Transparency</strong>: Users are informed about the types of data collected, how it is used, and their rights under the Data Privacy Act of 2012.</li>
-                <li><strong>Access and Control</strong>: Users can access, update, or request deletion of their data through the account management features. A verification step is required for sensitive actions like account deletion.</li>
-                <li><strong>Data Minimization</strong>: Only data necessary for the system’s functionality is collected.</li>
-                <li><strong>Accountability</strong>: We maintain records of data processing activities and conduct regular compliance reviews to ensure adherence to the Data Privacy Act of 2012.</li>
-                <li><strong>Notification of Breaches</strong>: In the event of a data breach, affected users will be notified within 72 hours, as required by law, and appropriate remedial actions will be taken.</li>
-              </ul>
+              <div>
+                <h4 className="mb-2 text-lg font-semibold text-gray-800 dark:text-white">
+                  5. Data Storage and Security
+                </h4>
+                <p className="mb-3">
+                  All collected data is securely stored within the MetamorPET system and protected from unauthorized access, alteration, or disclosure. We implement standard security measures to ensure the confidentiality and integrity of user data.
+                </p>
+                <p>
+                  Only authorized users—teachers, parents, and administrators—may access relevant information based on their assigned roles.
+                </p>
+              </div>
 
-              <h4 className="font-semibold mt-4">6. User Rights</h4>
-              <p>Under the Data Privacy Act of 2012, you have the following rights:</p>
-              <ul className="list-disc pl-5">
-                <li><strong>Right to be Informed</strong>: You will be informed about how your data is processed.</li>
-                <li><strong>Right to Access</strong>: You can request access to your personal data.</li>
-                <li><strong>Right to Rectification</strong>: You can update or correct inaccurate data.</li>
-                <li><strong>Right to Erasure</strong>: You can request the permanent deletion of your data.</li>
-                <li><strong>Right to Object</strong>: You can object to certain data processing activities.</li>
-                <li><strong>Right to Data Portability</strong>: You can request a copy of your data in a structured format (where applicable).</li>
-                <li><strong>Right to File a Complaint</strong>: You can file a complaint with the National Privacy Commission if you believe your data privacy rights have been violated.</li>
-              </ul>
-              <p>To exercise these rights, contact our Data Protection Officer at metamorpet@gmail.com.</p>
+              <div>
+                <h4 className="mb-2 text-lg font-semibold text-gray-800 dark:text-white">
+                  6. Data Sharing and Disclosure
+                </h4>
+                <p className="mb-3">
+                  MetamorPET does not disclose any personal data to third parties. Information may only be shared under the following limited conditions:
+                </p>
+                <ul className="ml-6 space-y-2 list-disc">
+                  <li>When required by law or authorized school personnel.</li>
+                  <li>When necessary to ensure the educational functionality of the platform (e.g., teachers viewing class progress).</li>
+                </ul>
+                <p className="mt-3">
+                  In all cases, data access is strictly controlled and limited to legitimate educational purposes.
+                </p>
+              </div>
 
-              <h4 className="font-semibold mt-4">7. Data Deletion</h4>
-              <p>Upon requesting account deletion:</p>
-              <ul className="list-disc pl-5">
-                <li>A verification step (e.g., confirmation prompt or email verification) ensures the request is legitimate.</li>
-                <li>Users may opt to export their data (e.g., routine completion reports) before deletion.</li>
-                <li>All personal data is permanently removed from our systems within 30 days, except for data required to be retained by law.</li>
-                <li>Users will receive a confirmation notification upon successful deletion.</li>
-              </ul>
+              <div>
+                <h4 className="mb-2 text-lg font-semibold text-gray-800 dark:text-white">
+                  7. Account Retention and Deletion
+                </h4>
+                <p className="mb-3">
+                  All user accounts remain active while linked to the participating school.
+                </p>
+                <ul className="ml-6 space-y-2 list-disc">
+                  <li>Student accounts are deleted once the student graduates to protect privacy and keep the system database up to date.</li>
+                  <li>Parent, teacher, and administrator accounts may be removed if they are no longer associated with the school.</li>
+                </ul>
+                <p className="mt-3">
+                  All associated data will be securely deleted when an account is removed from the system.
+                </p>
+              </div>
 
-              <h4 className="font-semibold mt-4">8. Changes to the Privacy Policy</h4>
-              <p>We may update this Privacy Policy to reflect changes in our practices or legal requirements. Users will be notified of significant changes via email or system notifications, and continued use of the system constitutes acceptance of the updated policy.</p>
+              <div>
+                <h4 className="mb-2 text-lg font-semibold text-gray-800 dark:text-white">
+                  8. User Rights and Parental Consent
+                </h4>
+                <p className="mb-3">
+                  Parents and guardians have the right to review, correct, or request deletion of their child's data by contacting us directly. Since MetamorPET involves child users, parental involvement and supervision are encouraged when using the platform.
+                </p>
+                <p>
+                  Any data collection for child accounts is limited to educational use and verified through parental or school authorization.
+                </p>
+              </div>
 
-              <h4 className="font-semibold mt-4">9. Contact Us</h4>
-              <p>For questions, concerns, or to exercise your data privacy rights, contact our Data Protection Officer at metamorpet@gmail.com or 623 Bancal Extension, Meycauayan, 3020 Bulacan, Philippines.</p>
-
-              <p className="mt-4">This Privacy Policy is effective as of May 21, 2025.</p>
-            </div>
-            <button
+              <div>
+                <h4 className="mb-2 text-lg font-semibold text-gray-800 dark:text-white">
+                  9. Contact Us
+                </h4>
+                <p>
+                  For any questions, concerns, or requests regarding this Privacy Policy or your personal information, please contact us at: 📧 metamorpet@gmail.com
+                </p>
+              </div>
+                          <button
               onClick={() => setShowPrivacy(false)}
               className="mt-4 px-4 py-2 bg-brand-500 text-white rounded-lg hover:bg-brand-600"
             >
               Close
             </button>
+            </div>
+          </div>
           </div>
         </div>
       )}
